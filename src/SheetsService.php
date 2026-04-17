@@ -6,34 +6,49 @@ use Google\Service\Sheets\ValueRange;
 
 class SheetsService
 {
-    private $service;
-    private $spreadsheetId;
+    private Sheets $service;
+    private string $spreadsheetId;
 
-    public function __construct($json, $spreadsheetId)
+    public function __construct(string $json, string $spreadsheetId)
     {
+        $credenciais = json_decode($json, true);
+
+        if (!is_array($credenciais)) {
+            throw new Exception('JSON das credenciais inválido');
+        }
+
         $client = new Client();
-        $client->setAuthConfig(json_decode($json, true));
+        $client->setAuthConfig($credenciais);
         $client->setScopes([Sheets::SPREADSHEETS]);
 
         $this->service = new Sheets($client);
         $this->spreadsheetId = $spreadsheetId;
     }
 
-    public function idExisteNaBase($id)
+    public function idExisteNaBase(string $id): bool
     {
         $res = $this->service->spreadsheets_values->get(
             $this->spreadsheetId,
             'BASE!A2:A'
         );
 
-        foreach ($res->getValues() as $row) {
-            if (trim($row[0]) == $id) return true;
+        $values = $res->getValues();
+
+        if (!is_array($values)) {
+            return false;
+        }
+
+        foreach ($values as $row) {
+            $idBase = trim((string)($row[0] ?? ''));
+            if ($idBase === $id) {
+                return true;
+            }
         }
 
         return false;
     }
 
-    public function registrarChamada($horario, $id)
+    public function registrarChamada(string $horario, string $id): void
     {
         $body = new ValueRange([
             'values' => [[$horario, $id]]
