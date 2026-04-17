@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro de Chegada</title>
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: rgba(255,255,255,0.08);
+      --card-border: rgba(255,255,255,0.12);
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --primary: #f97316;
+      --primary-2: #fb923c;
+      --success: #16a34a;
+      --error: #dc2626;
+      --warning: #f59e0b;
+      --shadow: 0 20px 50px rgba(0,0,0,0.35);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(249,115,22,0.20), transparent 25%),
+        radial-gradient(circle at top right, rgba(59,130,246,0.18), transparent 30%),
+        linear-gradient(135deg, #0b1020 0%, #111827 45%, #0f172a 100%);
+      padding: 20px;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .scanner-card {
+      padding: 22px;
+    }
+
+    .side-card {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-badge {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 12px 30px rgba(249,115,22,0.35);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .brand p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      font-weight: bold;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    .reader-wrap {
+      padding: 16px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    #reader {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 18px;
+      min-height: 300px;
+      background: #050814;
+    }
+
+    .status-box {
+      border-radius: 20px;
+      padding: 16px 18px;
+      font-weight: bold;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1.4;
+      border: 1px solid transparent;
+      transition: 0.2s ease;
+    }
+
+    .status-info {
+      background: rgba(59,130,246,0.14);
+      border-color: rgba(59,130,246,0.22);
+      color: #dbeafe;
+    }
+
+    .status-success {
+      background: rgba(22,163,74,0.16);
+      border-color: rgba(22,163,74,0.25);
+      color: #dcfce7;
+    }
+
+    .status-error {
+      background: rgba(220,38,38,0.16);
+      border-color: rgba(220,38,38,0.24);
+      color: #fee2e2;
+    }
+
+    .status-warning {
+      background: rgba(245,158,11,0.16);
+      border-color: rgba(245,158,11,0.24);
+      color: #fef3c7;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 12px;
+    }
+
+    .input {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.07);
+      color: white;
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .input::placeholder {
+      color: #cbd5e1b0;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: white;
+      box-shadow: 0 10px 24px rgba(249,115,22,0.30);
+    }
+
+    .btn-dark {
+      background: rgba(255,255,255,0.08);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .row-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .info-panel,
+    .history-panel {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .panel-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-item {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .info-value {
+      font-weight: bold;
+      font-size: 16px;
+      word-break: break-word;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 420px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .history-item {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .history-item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .history-id {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .history-time {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .history-msg {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .tag-ok,
+    .tag-erro {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .tag-ok {
+      background: rgba(22,163,74,0.18);
+      color: #dcfce7;
+    }
+
+    .tag-erro {
+      background: rgba(220,38,38,0.18);
+      color: #fee2e2;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      body {
+        padding: 12px;
+      }
+
+      .scanner-card,
+      .side-card {
+        padding: 16px;
+      }
+
+      .brand h1 {
+        font-size: 22px;
+      }
+
+      .controls,
+      .row-buttons {
+        grid-template-columns: 1fr;
+      }
+
+      #reader {
+        min-height: 240px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="card scanner-card">
+      <div class="topbar">
+        <div class="brand">
+          <div class="brand-badge">📦</div>
+          <div>
+            <h1>Registro de Chegada</h1>
+            <p>Escaneie o código de barras do motorista para registrar a chegada.</p>
+          </div>
+        </div>
+        <div id="chipStatus" class="status-chip">Iniciando scanner...</div>
+      </div>
+
+      <div class="hero">
+        <div class="reader-wrap">
+          <div id="reader"></div>
+        </div>
+
+        <div id="statusBox" class="status-box status-info">
+          Preparando câmera e leitor...
+        </div>
+
+        <div class="controls">
+          <input
+            type="text"
+            id="manualId"
+            class="input"
+            placeholder="Digite o ID manualmente"
+            inputmode="numeric"
+          />
+          <button id="btnRegistrar" class="btn btn-primary">Registrar ID</button>
+        </div>
+
+        <div class="row-buttons">
+          <button id="btnReiniciar" class="btn btn-dark">Reiniciar câmera</button>
+          <button id="btnLimpar" class="btn btn-dark">Limpar histórico</button>
+        </div>
+
+        <div class="footer-note">
+          Dica: após um registro, o sistema aguarda alguns segundos para evitar leitura duplicada.
+        </div>
+      </div>
+    </section>
+
+    <aside class="card side-card">
+      <div class="info-panel">
+        <h2 class="panel-title">Último retorno</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">ID</div>
+            <div id="infoId" class="info-value">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Mensagem</div>
+            <div id="infoMensagem" class="info-value">Aguardando leitura</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Horário</div>
+            <div id="infoHorario" class="info-value">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-panel">
+        <h2 class="panel-title">Histórico da sessão</h2>
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const API_URL = "https://registro-yms-production.up.railway.app/index.php";
+
+    const statusBox = document.getElementById("statusBox");
+    const chipStatus = document.getElementById("chipStatus");
+    const manualId = document.getElementById("manualId");
+    const btnRegistrar = document.getElementById("btnRegistrar");
+    const btnReiniciar = document.getElementById("btnReiniciar");
+    const btnLimpar = document.getElementById("btnLimpar");
+    const historyList = document.getElementById("historyList");
+
+    const infoId = document.getElementById("infoId");
+    const infoMensagem = document.getElementById("infoMensagem");
+    const infoHorario = document.getElementById("infoHorario");
+
+    let html5QrCode = null;
+    let scannerAtivo = false;
+    let processando = false;
+    let ultimoCodigo = "";
+    let ultimoMomento = 0;
+
+    function setStatus(texto, tipo = "info") {
+      statusBox.textContent = texto;
+      statusBox.className = `status-box status-${tipo}`;
+      chipStatus.textContent = texto;
+    }
+
+    function atualizarInfo({ id = "-", mensagem = "-", horario = "-" }) {
+      infoId.textContent = id || "-";
+      infoMensagem.textContent = mensagem || "-";
+      infoHorario.textContent = horario || "-";
+    }
+
+    function adicionarHistorico({ id, mensagem, horario, ok }) {
+      const item = document.createElement("div");
+      item.className = "history-item";
+
+      item.innerHTML = `
+        <div class="history-item-top">
+          <div class="history-id">ID: ${id || "-"}</div>
+          <div class="${ok ? "tag-ok" : "tag-erro"}">${ok ? "Sucesso" : "Erro"}</div>
+        </div>
+        <div class="history-time">${horario || new Date().toLocaleString("pt-BR")}</div>
+        <div class="history-msg">${mensagem || "-"}</div>
+      `;
+
+      historyList.prepend(item);
+
+      while (historyList.children.length > 20) {
+        historyList.removeChild(historyList.lastChild);
+      }
+    }
+
+    function limparHistorico() {
+      historyList.innerHTML = "";
+      atualizarInfo({
+        id: "-",
+        mensagem: "Histórico limpo",
+        horario: "-"
+      });
+      setStatus("Histórico limpo", "info");
+    }
+
+    function tocarBipSucesso() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.value = 900;
+        gain.gain.value = 0.08;
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        setTimeout(() => {
+          osc.stop();
+          ctx.close();
+        }, 120);
+      } catch (e) {}
+    }
+
+    function tocarBipErro() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "square";
+        osc.frequency.value = 280;
+        gain.gain.value = 0.05;
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        setTimeout(() => {
+          osc.stop();
+          ctx.close();
+        }, 180);
+      } catch (e) {}
+    }
+
+    async function registrarId(id) {
+      const idLimpo = String(id || "").trim();
+
+      if (!idLimpo) {
+        setStatus("Digite ou escaneie um ID válido.", "warning");
+        atualizarInfo({
+          id: "-",
+          mensagem: "ID inválido",
+          horario: new Date().toLocaleString("pt-BR")
+        });
+        return;
+      }
+
+      if (processando) return;
+      processando = true;
+
+      setStatus(`Registrando ID ${idLimpo}...`, "info");
+
+      try {
+        const resposta = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ id: idLimpo })
+        });
+
+        const json = await resposta.json();
+
+        const horarioTela = json.horario || new Date().toLocaleString("pt-BR");
+
+        if (json.ok) {
+          tocarBipSucesso();
+          setStatus(`Registro realizado com sucesso para o ID ${idLimpo}.`, "success");
+          atualizarInfo({
+            id: json.id || idLimpo,
+            mensagem: json.mensagem || "Registrado com sucesso",
+            horario: horarioTela
+          });
+          adicionarHistorico({
+            id: json.id || idLimpo,
+            mensagem: json.mensagem || "Registrado com sucesso",
+            horario: horarioTela,
+            ok: true
+          });
+        } else {
+          tocarBipErro();
+          setStatus(json.mensagem || "Não foi possível registrar.", "error");
+          atualizarInfo({
+            id: idLimpo,
+            mensagem: json.mensagem || "Erro ao registrar",
+            horario: horarioTela
+          });
+          adicionarHistorico({
+            id: idLimpo,
+            mensagem: json.mensagem || "Erro ao registrar",
+            horario: horarioTela,
+            ok: false
+          });
+        }
+      } catch (erro) {
+        tocarBipErro();
+        const horarioTela = new Date().toLocaleString("pt-BR");
+        setStatus("Erro de conexão com a API.", "error");
+        atualizarInfo({
+          id: idLimpo,
+          mensagem: "Erro de conexão com a API",
+          horario: horarioTela
+        });
+        adicionarHistorico({
+          id: idLimpo,
+          mensagem: "Erro de conexão com a API",
+          horario: horarioTela,
+          ok: false
+        });
+      } finally {
+        processando = false;
+        manualId.value = "";
+        manualId.focus();
+      }
+    }
+
+    function tratarLeitura(decodedText) {
+      const agora = Date.now();
+
+      if (decodedText === ultimoCodigo && (agora - ultimoMomento) < 2500) {
+        return;
+      }
+
+      ultimoCodigo = decodedText;
+      ultimoMomento = agora;
+
+      registrarId(decodedText);
+    }
+
+    async function iniciarScanner() {
+      try {
+        setStatus("Iniciando câmera...", "info");
+
+        if (html5QrCode && scannerAtivo) {
+          await html5QrCode.stop();
+          scannerAtivo = false;
+        }
+
+        html5QrCode = new Html5Qrcode("reader");
+        const cameras = await Html5Qrcode.getCameras();
+
+        if (!cameras || !cameras.length) {
+          setStatus("Nenhuma câmera encontrada no dispositivo.", "error");
+          return;
+        }
+
+        const cameraPreferida = cameras[cameras.length - 1]?.id || cameras[0].id;
+
+        await html5QrCode.start(
+          cameraPreferida,
+          {
+            fps: 10,
+            qrbox: { width: 260, height: 160 },
+            aspectRatio: 1.7778
+          },
+          (decodedText) => tratarLeitura(decodedText),
+          () => {}
+        );
+
+        scannerAtivo = true;
+        setStatus("Scanner pronto. Aponte para o código de barras.", "success");
+      } catch (erro) {
+        scannerAtivo = false;
+        setStatus("Não foi possível iniciar a câmera. Verifique a permissão.", "error");
+      }
+    }
+
+    btnRegistrar.addEventListener("click", () => {
+      registrarId(manualId.value);
+    });
+
+    manualId.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        registrarId(manualId.value);
+      }
+    });
+
+    btnReiniciar.addEventListener("click", () => {
+      iniciarScanner();
+    });
+
+    btnLimpar.addEventListener("click", () => {
+      limparHistorico();
+    });
+
+    window.addEventListener("load", () => {
+      iniciarScanner();
+      manualId.focus();
+    });
+  </script>
+</body>
+</html>
